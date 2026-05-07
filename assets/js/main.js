@@ -138,7 +138,7 @@
       setStatus('Sending...');
 
       try {
-        const res = await fetch('https://formspree.io/f/xwpggrab', {
+        const res = await fetch('https://formspree.io/f/mjgleoyy', {
           method: 'POST',
           body: formData,
           headers: {
