@@ -69,7 +69,7 @@
   }
 
   // -----------------------------
-  // CONTACT FORM (ROBUST FORMSPREE FIX)
+  // CONTACT FORM (NO AJAX — FIXED FOR FORMSPREE)
   // -----------------------------
   const form = document.querySelector('[data-contact-form]');
   const statusEl = document.querySelector('[data-form-status]');
@@ -120,43 +120,21 @@
       if (errors.length) {
         errors.forEach(([k]) => mark(fields[k], true));
         setStatus(errors[0][1]);
-        return { ok: false, v: null };
+        return false;
       }
 
       setStatus('');
-      return { ok: true, v };
+      return true;
     };
 
-    form.addEventListener('submit', async (e) => {
-      const { ok, v } = validate();
+    form.addEventListener('submit', () => {
+      if (!validate()) return;
 
-      // IMPORTANT: always stop native submit (prevents mailto / fallback POST chaos)
-      e.preventDefault();
-
-      if (!ok) return;
-
-      const formData = new FormData(form);
-
+      // DO NOT AJAX — let Formspree handle it
       setStatus('Sending...');
 
-      try {
-        const res = await fetch('https://formspree.io/f/mjgleoyy', {
-          method: 'POST',
-          body: formData,
-          headers: {
-            Accept: 'application/json'
-          }
-        });
-
-        if (res.ok) {
-          form.reset();
-          setStatus('Message sent successfully.');
-        } else {
-          setStatus('Failed to send. Please try again.');
-        }
-      } catch (err) {
-        setStatus('Network error. Please try again.');
-      }
+      // allow native submit to proceed
+      form.submit();
     });
   }
 })();
