@@ -69,7 +69,7 @@
   }
 
   // -----------------------------
-  // CONTACT FORM (FIXED FOR FORMSPREE)
+  // CONTACT FORM (ROBUST FORMSPREE FIX)
   // -----------------------------
   const form = document.querySelector('[data-contact-form]');
   const statusEl = document.querySelector('[data-form-status]');
@@ -120,17 +120,19 @@
       if (errors.length) {
         errors.forEach(([k]) => mark(fields[k], true));
         setStatus(errors[0][1]);
-        return { ok: false };
+        return { ok: false, v: null };
       }
 
       setStatus('');
-      return { ok: true };
+      return { ok: true, v };
     };
 
     form.addEventListener('submit', async (e) => {
+      const { ok, v } = validate();
+
+      // IMPORTANT: always stop native submit (prevents mailto / fallback POST chaos)
       e.preventDefault();
 
-      const { ok } = validate();
       if (!ok) return;
 
       const formData = new FormData(form);
