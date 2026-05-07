@@ -58,9 +58,6 @@
     mountCookieNotice();
   }
 
-  const prefersReduced =
-    window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches;
-
   const menuBtn = document.querySelector('[data-menu-btn]');
   const mainNav = document.querySelector('[data-main-nav]');
 
@@ -71,11 +68,22 @@
     });
   }
 
-  // CONTACT FORM (FIXED)
+  // -----------------------------
+  // CONTACT FORM (FIXED FOR FORMSPREE)
+  // -----------------------------
   const form = document.querySelector('[data-contact-form]');
   const statusEl = document.querySelector('[data-form-status]');
-  const recipientEl = document.querySelector('[data-contact-recipient]');
-  const recipient = recipientEl?.textContent?.trim() || 'contact@cyberneticdialysis.com';
+
+  const setStatus = (msg) => {
+    if (statusEl) statusEl.textContent = msg;
+  };
+
+  const mark = (el, bad) => {
+    if (el) el.classList.toggle('error', !!bad);
+  };
+
+  const validEmail = (v) =>
+    /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(v || '').trim());
 
   if (form) {
     const fields = {
@@ -86,17 +94,6 @@
       phone: form.querySelector('input[name="phone"]'),
       enquiry: form.querySelector('textarea[name="enquiry"]'),
     };
-
-    const setStatus = (msg) => {
-      if (statusEl) statusEl.textContent = msg;
-    };
-
-    const mark = (el, bad) => {
-      if (el) el.classList.toggle('error', !!bad);
-    };
-
-    const validEmail = (v) =>
-      /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(v || '').trim());
 
     const validate = () => {
       const v = {
@@ -123,46 +120,40 @@
       if (errors.length) {
         errors.forEach(([k]) => mark(fields[k], true));
         setStatus(errors[0][1]);
-        return { ok: false, v };
+        return { ok: false };
       }
 
       setStatus('');
-      return { ok: true, v };
+      return { ok: true };
     };
-
-    const buildMessage = (v) => ({
-      subject: `CYBERNETIC DIALYSIS enquiry from ${v.name}`,
-      body: `
-CYBERNETIC DIALYSIS — Website enquiry
-
-Name: ${v.name}
-Position: ${v.position}
-Company: ${v.company}
-Email: ${v.email}
-Phone: ${v.phone}
-
-Enquiry:
-${v.enquiry}
-      `.trim(),
-    });
-
-    const toMailto = ({ subject, body }) =>
-      `mailto:${encodeURIComponent(recipient)}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
 
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
 
-      const { ok, v } = validate();
+      const { ok } = validate();
       if (!ok) return;
 
-      const msg = buildMessage(v);
+      const formData = new FormData(form);
 
-      setStatus('Opening email client…');
+      setStatus('Sending...');
 
       try {
-        window.location.href = toMailto(msg);
-      } catch (_) {
-        setStatus('Could not open email client.');
+        const res = await fetch('https://formspree.io/f/xwpggrab', {
+          method: 'POST',
+          body: formData,
+          headers: {
+            Accept: 'application/json'
+          }
+        });
+
+        if (res.ok) {
+          form.reset();
+          setStatus('Message sent successfully.');
+        } else {
+          setStatus('Failed to send. Please try again.');
+        }
+      } catch (err) {
+        setStatus('Network error. Please try again.');
       }
     });
   }
